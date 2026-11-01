@@ -8,7 +8,7 @@
 **Institution:** Mehta Family School of Data Science and Artificial Intelligence, Indian Institute of Technology Guwahati (IIT Guwahati), India  
 **Authors:**  
 * **Ruttala Vamsi Krishna** (Roll No: 250150034)  
-* **Bhagadi Bhargav** (Roll No: 250150009)  
+* **Bagadi Bhargav** (Roll No: 250150009)  
 
 ---
 
@@ -160,7 +160,7 @@ If citing this work, please use:
 ```bibtex
 @article{krishna_bhargav_2026,
   title={Classical and Bayesian Estimation of the Lomax Distribution under Joint Improved Adaptive Progressive Censored Competing Risks Data},
-  author={Krishna, Ruttala Vamsi and Bhargav, Bhagadi},
+  author={Krishna, Ruttala Vamsi and Bhargav, Bagadi},
   journal={Course Project Report, DA2141: Statistics for Data Science, IIT Guwahati},
   year={2026}
 }
