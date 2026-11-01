@@ -1,7 +1,6 @@
 # Classical and Bayesian Estimation of the Lomax Distribution under Joint Improved Adaptive Progressive Censored Competing Risks Data
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Manuscript: 14 Pages](https://img.shields.io/badge/Manuscript-14%20Pages%20Verified-brightgreen.svg)](Lomax_JIAPCS_Project_Report.pdf)
 [![IIT Guwahati](https://img.shields.io/badge/IIT%20Guwahati-DA2141-red.svg)](https://www.iitg.ac.in/)
 
@@ -21,7 +20,7 @@
 5. [Real Data Applications](#real-data-applications)
 6. [Quick Start & Reproducibility Guide](#quick-start--reproducibility-guide)
 7. [LaTeX Manuscript Compilation](#latex-manuscript-compilation)
-8. [License & Citation](#license--citation)
+8. [Academic Notice & Citation](#academic-notice--citation)
 
 ---
 
@@ -82,7 +81,6 @@ Lomax-JIAPCS-Competing-Risks/
 ├── fig1.png                          # High-res Figure 1 (Simulation summary: existence, MSE, coverage)
 ├── fig2.png                          # High-res Figure 2 (Boeing 720 aircraft air-conditioning analysis)
 ├── fig3.png                          # High-res Figure 3 (Nelson electrical appliance competing risks)
-├── LICENSE                           # MIT License
 ├── README.md                         # This repository documentation
 │
 └── code/                             # Self-contained Python scripts and simulation results
@@ -153,11 +151,11 @@ Or upload all files directly to [Overleaf](https://www.overleaf.com/) and compil
 
 ---
 
-## 📜 License & Citation
+## 📜 Academic Notice & Citation
 
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
+This repository is submitted as a course project for **DA2141: Statistics for Data Science** at the **Mehta Family School of Data Science and Artificial Intelligence, Indian Institute of Technology Guwahati (IIT Guwahati)**. All rights are reserved to the authors.
 
-If you find this work or implementation helpful in your research or coursework, please cite:
+If citing this work, please use:
 
 ```bibtex
 @article{krishna_bhargav_2026,
