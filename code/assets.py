@@ -18,7 +18,6 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from lomax_joint import *
 from realdata import plane
@@ -184,6 +183,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(tex_dir, "fig_sim.png"), dpi=170)
 plt.savefig(os.path.join(_script_dir, "..", "fig1.png"), dpi=170)
 plt.savefig(os.path.join(_script_dir, "fig1.png"), dpi=170)
+plt.show()
 plt.close()
 
 # ------------- Figure 2: aircraft real data
@@ -260,6 +260,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(tex_dir, "fig_air.png"), dpi=170)
 plt.savefig(os.path.join(_script_dir, "..", "fig2.png"), dpi=170)
 plt.savefig(os.path.join(_script_dir, "fig2.png"), dpi=170)
+plt.show()
 plt.close()
 
 # ------------- Figure 3: appliance data
@@ -337,6 +338,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(tex_dir, "fig_app.png"), dpi=170)
 plt.savefig(os.path.join(_script_dir, "..", "fig3.png"), dpi=170)
 plt.savefig(os.path.join(_script_dir, "fig3.png"), dpi=170)
+plt.show()
 plt.close()
 
 # ------------- tables for real data

@@ -37,6 +37,5 @@ desktop.ini
 # Simulation and Build outputs
 code/simres/
 code/tex/
-code/*.png
-code/*.npz
+code/__pycache__/
 
