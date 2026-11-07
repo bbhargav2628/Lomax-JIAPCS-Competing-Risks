@@ -8,16 +8,34 @@ Observed data are split by population.  For population d the likelihood (up to a
                                                       population-d units that failed or were withdrawn then)
 so each population is analysed with the same 3-parameter engine.
 """
+import os
+import sys
+
+# Ensure local venv site-packages is discoverable if needed
+for p in [
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".venv", "Lib", "site-packages")),
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".venv", "Lib", "site-packages")),
+]:
+    if os.path.exists(p) and p not in sys.path:
+        sys.path.insert(0, p)
+
 import numpy as np
 from scipy import special as sp
 
 def lomax_q(u, alpha, lam):
+    """Lomax quantile function Q(u; alpha, lam)."""
     return ((1.0 - u) ** (-1.0 / alpha) - 1.0) / lam
 
-def make_scheme(kind, m, k):
-    """Removal vector R_1..R_{k-1} (length k-1) for the three patterns used in the report."""
+def make_scheme(kind, k, tot=6):
+    """Removal vector R_1..R_{k-1} (length k-1) for progressive schemes."""
     R = np.zeros(k - 1, dtype=int)
-    tot = {"early": 6, "mid": 6, "late": 6}
+    if kind == "early":
+        R[0] = tot
+    elif kind == "late":
+        R[-1] = tot
+    elif kind == "mid":
+        R[(k - 1) // 2 - 1] = tot // 2
+        R[(k - 1) // 2] = tot - tot // 2
     return R
 
 # ---------------------------------------------------------------------------------------------
@@ -157,7 +175,8 @@ def mle(d, ngrid=400, chunk=250):
 
 def obs_info(d, est):
     lam = np.where(est["ok"], est["lam"], 1.0)
-    a1 = np.where(est["ok"], est["a1"], 1.0); a2 = np.where(est["ok"], est["a2"], 1.0)
+    a1 = np.maximum(np.where(est["ok"], est["a1"], 1.0), 1e-12)
+    a2 = np.maximum(np.where(est["ok"], est["a2"], 1.0), 1e-12)
     Dp = Dp_fun(d, lam); E = E_fun(d, lam); N = d["N"].astype(float)
     sx2 = (d["x"] ** 2 * d["mask"] / (1 + lam[:, None] * d["x"]) ** 2).sum(1)
     I = np.zeros((len(lam), 3, 3))
@@ -170,13 +189,20 @@ def aci(d, est, z=1.959964):
     I = obs_info(d, est); cov = np.full(I.shape, np.nan)
     for r in np.where(est["ok"])[0]:
         try:
-            if np.linalg.det(I[r]) > 0 and I[r, 2, 2] > 0 and I[r, 0, 0] > 0:
+            if np.linalg.det(I[r]) > 0 and I[r, 2, 2] > 0 and I[r, 0, 0] > 0 and I[r, 1, 1] > 0:
                 cov[r] = np.linalg.inv(I[r])
-        except np.linalg.LinAlgError:
+        except (np.linalg.LinAlgError, ValueError):
             pass
     th = np.stack([est["a1"], est["a2"], est["lam"]], 1)
-    sd = np.sqrt(np.stack([cov[:, i, i] for i in range(3)], 1))
-    return dict(th=th, sd=sd, lo=th - z * sd, hi=th + z * sd, llo=th * np.exp(-z * sd / th), lhi=th * np.exp(z * sd / th))
+    diag_cov = np.stack([cov[:, i, i] for i in range(3)], 1)
+    diag_cov = np.where(diag_cov > 0, diag_cov, np.nan)
+    sd = np.sqrt(diag_cov)
+    rel = np.nan_to_num(sd / np.maximum(th, 1e-12), nan=0.0)
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        exp_arg = np.clip(z * rel, 0.0, 300.0)
+        llo = th * np.exp(-exp_arg)
+        lhi = np.where(z * rel > 300.0, np.inf, th * np.exp(exp_arg))
+    return dict(th=th, sd=sd, lo=th - z * sd, hi=th + z * sd, llo=llo, lhi=lhi)
 
 # ---------------------------------------------------------------------------------------------
 # Bayesian estimation: collapsed Gibbs sampler (alpha integrated out analytically, MH on log lam)
@@ -187,7 +213,8 @@ def log_marg_lam(d, lam, pr, restricted):
     r1 = pr["b1"] + Dl; r2 = pr["b2"] + Dl
     lp = ((pr["c"] + N - 1) * np.log(lam) - pr["dl"] * lam - sumlog(d, lam) - s1 * np.log(r1) - s2 * np.log(r2))
     if restricted:
-        lp = lp + np.log(np.clip(sp.betainc(s1, s2, r1 / (r1 + r2)), 1e-300, None))
+        bet = np.clip(sp.betainc(s1, s2, r1 / (r1 + r2)), 1e-300, 1.0)
+        lp = lp + np.log(bet)
     return lp
 
 def mcmc(d, pr, restricted, rng, iters=2000, burn=800, init=None):
@@ -197,12 +224,14 @@ def mcmc(d, pr, restricted, rng, iters=2000, burn=800, init=None):
     step = np.full(reps, 0.5); cur = log_marg_lam(d, lam, pr, restricted)
     draws = np.empty((reps, iters, 3)); acc_tot = np.zeros(reps)
     for t in range(iters + burn):
-        prop = lam * np.exp(step * rng.standard_normal(reps))
+        prop = lam * np.exp(np.clip(step * rng.standard_normal(reps), -50.0, 50.0))
         lp = log_marg_lam(d, prop, pr, restricted)
-        acc = np.log(rng.random(reps)) < lp - cur + np.log(prop) - np.log(lam)
+        u_rand = np.clip(rng.random(reps), 1e-300, 1.0)
+        acc = np.log(u_rand) < lp - cur + np.log(prop) - np.log(lam)
         lam = np.where(acc, prop, lam); cur = np.where(acc, lp, cur)
         if t < burn:
             step *= np.exp((acc - 0.35) / np.sqrt(t + 10.0))
+            step = np.clip(step, 1e-3, 10.0)
         else:
             acc_tot += acc; k = t - burn
             Dl = D_fun(d, lam)
@@ -211,18 +240,36 @@ def mcmc(d, pr, restricted, rng, iters=2000, burn=800, init=None):
             if not restricted:
                 a1 = rng.gamma(s1) / r1; a2 = rng.gamma(s2) / r2
             else:
-                c = sp.betainc(s1, s2, r1 / (r1 + r2))
-                B = sp.betaincinv(s1, s2, np.clip(rng.random(reps) * c, 1e-300, 1 - 1e-16))
+                c = np.clip(sp.betainc(s1, s2, r1 / (r1 + r2)), 1e-300, 1.0)
+                B = sp.betaincinv(s1, s2, np.clip(rng.random(reps) * c, 1e-300, 1.0 - 1e-16))
                 Sg = rng.gamma(s1 + s2); a1 = B * Sg / r1; a2 = (1 - B) * Sg / r2
             draws[:, k, 0] = a1; draws[:, k, 1] = a2; draws[:, k, 2] = lam
     return draws, acc_tot / iters
 
 def bayes_est(draws, p=0.5, c=0.5):
-    return {"SE": draws.mean(1),
-            "LINEX+": -np.log(np.mean(np.exp(-p * draws), axis=1)) / p,
-            "LINEX-": np.log(np.mean(np.exp(p * draws), axis=1)) / p,
-            "GE+": np.mean(draws ** (-c), axis=1) ** (-1.0 / c),
-            "GE-": np.mean(draws ** c, axis=1) ** (1.0 / c)}
+    """
+    Computes Bayes estimators under SELF, LINEX (p=+-0.5), and GELF (c=+-0.5).
+    Uses numerically stable log-sum-exp formulation to prevent exponential overflow.
+    """
+    se = draws.mean(1)
+    
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        # LINEX+ : -(1/p) * ln E[exp(-p*theta)]
+        val_minus = -p * draws
+        m_minus = np.max(val_minus, axis=1, keepdims=True)
+        linex_plus = -(m_minus[:, 0, :] + np.log(np.maximum(np.mean(np.exp(val_minus - m_minus), axis=1), 1e-300))) / p
+
+        # LINEX- : (1/p) * ln E[exp(p*theta)] using log-sum-exp to prevent overflow
+        val_plus = p * draws
+        m_plus = np.max(val_plus, axis=1, keepdims=True)
+        linex_minus = (m_plus[:, 0, :] + np.log(np.maximum(np.mean(np.exp(val_plus - m_plus), axis=1), 1e-300))) / p
+
+        # GELF+ and GELF- with safe clipping to prevent divide by zero
+        safe_draws = np.maximum(draws, 1e-12)
+        ge_plus = np.maximum(np.mean(safe_draws ** (-c), axis=1), 1e-300) ** (-1.0 / c)
+        ge_minus = np.maximum(np.mean(safe_draws ** c, axis=1), 1e-300) ** (1.0 / c)
+
+    return {"SE": se, "LINEX+": linex_plus, "LINEX-": linex_minus, "GE+": ge_plus, "GE-": ge_minus}
 
 def hpd(draws, level=0.95):
     reps, M, _ = draws.shape

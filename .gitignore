@@ -33,3 +33,10 @@ desktop.ini
 *~
 .vscode/
 .idea/
+
+# Simulation and Build outputs
+code/simres/
+code/tex/
+code/*.png
+code/*.npz
+
