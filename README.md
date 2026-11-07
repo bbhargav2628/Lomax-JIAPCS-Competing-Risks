@@ -2,6 +2,7 @@
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
 [![Manuscript: 14 Pages](https://img.shields.io/badge/Manuscript-14%20Pages%20Verified-brightgreen.svg)](Lomax_JIAPCS_Project_Report.pdf)
+[![Presentation: 15 Slides](https://img.shields.io/badge/Presentation-15%20Slides-orange.svg)](Lomax_JIAPCS_Presentation.pptx)
 [![IIT Guwahati](https://img.shields.io/badge/IIT%20Guwahati-DA2141-red.svg)](https://www.iitg.ac.in/)
 
 **Course:** DA2141: Statistics for Data Science — Course Project  
@@ -74,6 +75,7 @@ Lomax-JIAPCS-Competing-Risks/
 │
 ├── main.pdf                          # Primary 14-page verified manuscript (0 broken refs)
 ├── Lomax_JIAPCS_Project_Report.pdf   # Standalone copy for direct browser reading on GitHub
+├── Lomax_JIAPCS_Presentation.pptx   # Complete 15-slide editable PowerPoint presentation
 ├── main.tex                          # Complete LaTeX source adhering strictly to template
 ├── generic.sty                       # Preserved template style file (\usepackage{generic})
 ├── reference.bib                     # BibTeX database (all 15 cited references)
